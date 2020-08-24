@@ -64,13 +64,13 @@ impl email_server::Email for EmailService {
 
 #[tokio::main]
 async fn main() -> prelude::EmailResult<()> {
-    let addr_email: String = std::env::var("ADDR_email_microservice")?;
+    let addr = "[::1]:50053".parse().unwrap();
 
     let email_service = EmailService::new();
 
     Server::builder()
         .add_service(email_server::EmailServer::new(email_service))
-        .serve(addr_email.parse().unwrap())
+        .serve(addr)
         .await
         .expect("Error while staring server"); // Todo implement ? from<?>
 
