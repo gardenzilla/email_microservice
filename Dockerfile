@@ -15,7 +15,7 @@ WORKDIR /usr/local/bin
 COPY ./target/release/email_microservice /usr/local/bin/email_microservice
 RUN apt-get update && apt-get install -y
 RUN apt-get install curl -y
-CMD ["user_microservice"]
+CMD ["email_microservice"]
 # EXPOSE 50051/tcp
 
 # FROM alpine:latest
