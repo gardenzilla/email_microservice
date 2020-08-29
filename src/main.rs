@@ -3,6 +3,7 @@ use protos::email::*;
 use std::sync::mpsc::*;
 use std::sync::Mutex;
 use std::thread::JoinHandle;
+use tokio::sync::oneshot;
 use tonic::{transport::Server, Request, Response, Status};
 
 mod email;
@@ -68,11 +69,23 @@ async fn main() -> prelude::EmailResult<()> {
 
     let email_service = EmailService::new();
 
-    Server::builder()
-        .add_service(email_server::EmailServer::new(email_service))
-        .serve(addr)
-        .await
-        .expect("Error while staring server"); // Todo implement ? from<?>
+    // Create shutdown channel
+    let (tx, rx) = oneshot::channel();
+
+    // Spawn the server into a runtime
+    tokio::task::spawn(async move {
+        Server::builder()
+            .add_service(email_server::EmailServer::new(email_service))
+            .serve_with_shutdown(addr, async { rx.await.unwrap() })
+            .await
+    });
+
+    tokio::signal::ctrl_c().await.unwrap();
+
+    println!("SIGINT");
+
+    // Send shutdown signal after SIGINT received
+    let _ = tx.send(());
 
     Ok(())
 }
